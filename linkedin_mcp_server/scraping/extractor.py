@@ -449,6 +449,7 @@ class LinkedInExtractor:
             "sections_requested": ["search_results"],
         }
         if people:
-            result["people"] = people
+            "people": people,
+        }   
 
         return result
