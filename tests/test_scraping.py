@@ -385,6 +385,88 @@ class TestScrapeCompany:
         assert result["sections_requested"] == ["about", "posts", "jobs"]
 
 
+class TestSearchPeople:
+    async def test_search_people_includes_people_list(self, mock_page):
+        """search_people should return a 'people' list with linkedin_username."""
+        extractor = LinkedInExtractor(mock_page)
+        people_data = [
+            {"linkedin_username": "janedoe", "name": "Jane Doe"},
+            {"linkedin_username": "johnsmith", "name": "John Smith"},
+        ]
+        with (
+            patch.object(
+                extractor,
+                "extract_page",
+                new_callable=AsyncMock,
+                return_value="Jane Doe\nAI Engineer\nJohn Smith\nData Scientist",
+            ),
+            patch.object(
+                extractor,
+                "_extract_people_links",
+                new_callable=AsyncMock,
+                return_value=people_data,
+            ),
+        ):
+            result = await extractor.search_people("AI engineer")
+
+        assert "people" in result
+        assert len(result["people"]) == 2
+        assert result["people"][0]["linkedin_username"] == "janedoe"
+        assert result["people"][0]["name"] == "Jane Doe"
+        assert result["people"][1]["linkedin_username"] == "johnsmith"
+        assert "search_results" in result["sections"]
+
+    async def test_search_people_no_results(self, mock_page):
+        """When no people links found, 'people' key should be absent."""
+        extractor = LinkedInExtractor(mock_page)
+        with (
+            patch.object(
+                extractor,
+                "extract_page",
+                new_callable=AsyncMock,
+                return_value="No results found",
+            ),
+            patch.object(
+                extractor,
+                "_extract_people_links",
+                new_callable=AsyncMock,
+                return_value=[],
+            ),
+        ):
+            result = await extractor.search_people("nonexistent person xyz")
+
+        assert "people" not in result
+        assert "search_results" in result["sections"]
+
+    async def test_search_people_with_location(self, mock_page):
+        """Location parameter should be included in the URL."""
+        extractor = LinkedInExtractor(mock_page)
+        with (
+            patch.object(
+                extractor,
+                "extract_page",
+                new_callable=AsyncMock,
+                return_value="results",
+            ),
+            patch.object(
+                extractor,
+                "_extract_people_links",
+                new_callable=AsyncMock,
+                return_value=[],
+            ),
+        ):
+            result = await extractor.search_people("engineer", "Canada")
+
+        assert "location=Canada" in result["url"]
+
+    async def test_extract_people_links_returns_empty_on_error(self, mock_page):
+        """_extract_people_links should return [] on JS evaluation failure."""
+        mock_page.evaluate = AsyncMock(side_effect=Exception("JS error"))
+        extractor = LinkedInExtractor(mock_page)
+        result = await extractor._extract_people_links()
+        assert result == []
+
+
 class TestScrapeJob:
     async def test_scrape_job(self, mock_page):
         extractor = LinkedInExtractor(mock_page)
