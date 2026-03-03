@@ -384,6 +384,39 @@ class LinkedInExtractor:
             "sections_requested": ["search_results"],
         }
 
+    async def _extract_people_links(self) -> list[dict[str, str]]:
+        """Extract linkedin_username from people search result links on the current page.
+
+        Parses ``/in/<username>`` hrefs from the search results within ``<main>``,
+        deduplicates by username, and returns a list of dicts with
+        ``linkedin_username`` (and ``name`` when the link text is available).
+        """
+        try:
+            return await self._page.evaluate(
+                """() => {
+                    const results = [];
+                    const seen = new Set();
+                    const main = document.querySelector('main');
+                    if (!main) return results;
+                    const links = main.querySelectorAll('a[href*="/in/"]');
+                    for (const link of links) {
+                        const href = link.getAttribute('href');
+                        const match = href.match(/\\/in\\/([^/?]+)/);
+                        if (!match) continue;
+                        const username = match[1];
+                        if (seen.has(username)) continue;
+                        seen.add(username);
+                        const name = link.textContent?.trim() || '';
+                        if (name.length < 2) continue;
+                        results.push({ linkedin_username: username, name: name });
+                    }
+                    return results;
+                }"""
+            )
+        except Exception as e:
+            logger.warning("Failed to extract people links: %s", e)
+            return []
+
     async def search_people(
         self,
         keywords: str,
@@ -392,7 +425,8 @@ class LinkedInExtractor:
         """Search for people and extract the results page.
 
         Returns:
-            {url, sections: {name: text}, pages_visited, sections_requested}
+            {url, sections: {name: text}, pages_visited, sections_requested,
+             people: [{linkedin_username, name}, ...]}
         """
         params = f"keywords={quote_plus(keywords)}"
         if location:
@@ -405,9 +439,13 @@ class LinkedInExtractor:
         if text:
             sections["search_results"] = text
 
+        # Extract structured profile links while still on the search results page
+        people = await self._extract_people_links()
+
         return {
             "url": url,
             "sections": sections,
             "pages_visited": [url],
             "sections_requested": ["search_results"],
+            "people": people,
         }
