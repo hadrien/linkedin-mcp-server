@@ -78,7 +78,7 @@ All scraping tools return: `{url, sections: {name: raw_text}, pages_visited, sec
 - `exceptions.py` - Exception hierarchy (AuthenticationError, RateLimitError, etc.)
 - `browser.py` - `BrowserManager` with persistent context and cookie import/export
 - `auth.py` - `is_logged_in()`, `wait_for_manual_login()`, `warm_up_browser()`
-- `utils.py` - `detect_rate_limit()`, `scroll_to_bottom()`, `handle_modal_close()`
+- `utils.py` - `detect_rate_limit()`, `handle_modal_close()`
 
 **Authentication Flow:**
 

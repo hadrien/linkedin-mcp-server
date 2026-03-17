@@ -11,7 +11,7 @@ from .exceptions import (
     RateLimitError,
     ScrapingError,
 )
-from .utils import detect_rate_limit, handle_modal_close, scroll_to_bottom
+from .utils import detect_rate_limit, handle_modal_close
 
 __all__ = [
     "AuthenticationError",
@@ -25,7 +25,6 @@ __all__ = [
     "detect_rate_limit",
     "handle_modal_close",
     "is_logged_in",
-    "scroll_to_bottom",
     "wait_for_manual_login",
     "warm_up_browser",
 ]

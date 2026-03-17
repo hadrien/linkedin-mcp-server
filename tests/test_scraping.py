@@ -36,21 +36,9 @@ def mock_page():
 
 class TestExtractPage:
     async def test_extract_page_returns_text(self, mock_page):
-        mock_page.evaluate = AsyncMock(
-            side_effect=[
-                "Sample profile text",  # main.innerText
-                100,  # scrollHeight (first check)
-                None,  # scrollTo
-                100,  # scrollHeight (unchanged = stop)
-            ]
-        )
+        mock_page.evaluate = AsyncMock(return_value="Sample profile text")
         extractor = LinkedInExtractor(mock_page)
-        # Patch scroll_to_bottom and detect_rate_limit to avoid complex mock chains
         with (
-            patch(
-                "linkedin_mcp_server.scraping.extractor.scroll_to_bottom",
-                new_callable=AsyncMock,
-            ),
             patch(
                 "linkedin_mcp_server.scraping.extractor.detect_rate_limit",
                 new_callable=AsyncMock,
@@ -100,10 +88,6 @@ class TestExtractPage:
         extractor = LinkedInExtractor(mock_page)
         with (
             patch(
-                "linkedin_mcp_server.scraping.extractor.scroll_to_bottom",
-                new_callable=AsyncMock,
-            ),
-            patch(
                 "linkedin_mcp_server.scraping.extractor.detect_rate_limit",
                 new_callable=AsyncMock,
             ),
@@ -142,10 +126,6 @@ class TestExtractPage:
         mock_page.evaluate = AsyncMock(side_effect=evaluate_side_effect)
         extractor = LinkedInExtractor(mock_page)
         with (
-            patch(
-                "linkedin_mcp_server.scraping.extractor.scroll_to_bottom",
-                new_callable=AsyncMock,
-            ),
             patch(
                 "linkedin_mcp_server.scraping.extractor.detect_rate_limit",
                 new_callable=AsyncMock,

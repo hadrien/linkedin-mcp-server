@@ -12,7 +12,6 @@ from linkedin_mcp_server.core.exceptions import LinkedInScraperException
 from linkedin_mcp_server.core.utils import (
     detect_rate_limit,
     handle_modal_close,
-    scroll_to_bottom,
 )
 
 from .fields import (
@@ -96,7 +95,7 @@ class LinkedInExtractor:
 
     async def _extract_page_once(self, url: str) -> str:
         """Single attempt to navigate, scroll, and extract innerText."""
-        await self._page.goto(url, wait_until="domcontentloaded", timeout=30000)
+        await self._page.goto(url, wait_until="networkidle", timeout=30000)
         await detect_rate_limit(self._page)
 
         # Wait for main content to render
@@ -107,9 +106,6 @@ class LinkedInExtractor:
 
         # Dismiss any modals blocking content
         await handle_modal_close(self._page)
-
-        # Scroll to trigger lazy loading
-        await scroll_to_bottom(self._page, pause_time=0.5, max_scrolls=5)
 
         # Extract text from main content area
         raw = await self._page.evaluate(
@@ -159,7 +155,7 @@ class LinkedInExtractor:
 
     async def _extract_overlay_once(self, url: str) -> str:
         """Single attempt to extract content from an overlay/modal page."""
-        await self._page.goto(url, wait_until="domcontentloaded", timeout=30000)
+        await self._page.goto(url, wait_until="networkidle", timeout=30000)
         await detect_rate_limit(self._page)
 
         # Wait for the dialog/modal to render (LinkedIn uses native <dialog>)
