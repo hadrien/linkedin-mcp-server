@@ -35,16 +35,19 @@ async def detect_rate_limit(page: Page) -> None:
             suggested_wait_time=3600,
         )
 
-    # Check for CAPTCHA
+    # Check for visible CAPTCHA (blocking challenge, not invisible auto-resolve)
     try:
-        captcha = await page.locator(
+        captcha_locator = page.locator(
             'iframe[title*="captcha" i], iframe[src*="captcha" i]'
-        ).count()
-        if captcha > 0:
-            raise RateLimitError(
-                "CAPTCHA challenge detected. Manual intervention required.",
-                suggested_wait_time=3600,
-            )
+        )
+        if await captcha_locator.count() > 0:
+            is_visible = await captcha_locator.first.is_visible(timeout=1000)
+            if is_visible:
+                raise RateLimitError(
+                    "CAPTCHA challenge detected. Manual intervention required.",
+                    suggested_wait_time=3600,
+                )
+            logger.debug("Invisible CAPTCHA iframe detected (auto-challenge), ignoring")
     except RateLimitError:
         raise
     except PlaywrightTimeoutError:
