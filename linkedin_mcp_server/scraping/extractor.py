@@ -95,7 +95,7 @@ class LinkedInExtractor:
 
     async def _extract_page_once(self, url: str) -> str:
         """Single attempt to navigate, scroll, and extract innerText."""
-        await self._page.goto(url, wait_until="networkidle", timeout=30000)
+        await self._page.goto(url, wait_until="domcontentloaded", timeout=30000)
         await detect_rate_limit(self._page)
 
         # Wait for main content to render
@@ -155,7 +155,7 @@ class LinkedInExtractor:
 
     async def _extract_overlay_once(self, url: str) -> str:
         """Single attempt to extract content from an overlay/modal page."""
-        await self._page.goto(url, wait_until="networkidle", timeout=30000)
+        await self._page.goto(url, wait_until="domcontentloaded", timeout=30000)
         await detect_rate_limit(self._page)
 
         # Wait for the dialog/modal to render (LinkedIn uses native <dialog>)
